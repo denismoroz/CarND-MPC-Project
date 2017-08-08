@@ -1,6 +1,36 @@
 # CarND-Controls-MPC
 Self-Driving Car Engineer Nanodegree Program
 
+This is the final project for second term of Udacity Self-Driving Car Engineer Nanodegree Program.
+Goal of the project is implement Model Predictive Controller to control car in Udacity [simulator](https://github.com/udacity/self-driving-car-sim/releases). Simulator communicates with controller via WebSockets.
+Controller is written in C++. It receives telemetry and track waypoints and send back steering and acceleration command. One of the main requirement is that controller should run with 100ms latency.
+ 
+It is possible to check results of this controller in next [video](https://youtu.be/EcqCw4SxbZg).
+
+  
+## The Model  
+
+Controller is based on kinematic model that includes the vehicle's x and y coordinates, orientation angle (psi), and velocity, as well as the cross-track error and psi error (epsi). Output of the model is acceleration and steering angle.
+Based on state and actuations from previous timestamp controller calculate state based on the next equations:
+![equations](./pics/mpc_equations.png)
+
+## Timestep Length and Elapsed Duration (N & dt)
+N was selected as 10 and dt to 0.1. I tried to use different values for this 20 / 0.05, 8 / 0.125 and other, but this one shows the best results, also these values were suggested on Udacity's provided office hours for the project.
+These values means controller optimizer is considering 1s duration in which to determine a corrective trajectory.
+
+## Polynomial Fitting and MPC Preprocessing
+
+To simplify the process to fitting polynomial to waypoints, waypoints are transformed to o the vehicle's perspective (main.cpp: 102-110).
+Result is that the vehicle's x and y coordinates are now at the origin (0, 0) and the orientation angle is also zero.
+
+## Model Predictive Control with Latency
+
+100ms latency has significant impact on the result and must be handled properly.
+
+The resolution is quite simple, just incorporate this latency into the MPC system. (main.cpp:188). 
+After receiving states from the simulator, we first predict its state after 100 ms, and then feed this new state into the solver. 
+This makes sure that the actuation commands we issue to the simulator corresponds well with the current state of the vehicle.
+
 ---
 
 ## Dependencies
