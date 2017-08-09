@@ -92,12 +92,26 @@ int main() {
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
 
-          /*
-          * TODO: Calculate steering angle and throttle using MPC.
-          *
-          * Both are in between [-1, 1].
-          *
-          */
+          double steer_value = j[1]["steering_angle"];
+          double throttle_value = j[1]["throttle"];
+
+
+          std::cout << " x,"<< px <<" y,"<< py <<" psi,"<< psi <<" v,"<< v <<std::endl;
+
+          //handle latency
+          double last_delta = - steer_value;
+          double last_a = throttle_value;
+          const double dt = 0.1;
+          const double Lf = 2.67;
+
+          const double miles_to_meters = (1609.0/3600);
+          px = px + v*miles_to_meters *cos(psi)*dt;
+          py = py + v*miles_to_meters *sin(psi)*dt;
+          psi = psi + (v*miles_to_meters)/Lf * last_delta * dt;
+          v = v + (last_a * dt)/1609.0 ;
+
+          std::cout << "After latency:  x,"<< px <<" y,"<< py <<" psi,"<< psi <<" v,"<< v <<std::endl;
+
 
           for (int i = 0; i < ptsx.size(); i++) {
             // shift car reference angle to 90 degrees
@@ -118,8 +132,6 @@ int main() {
           double cte = polyeval(coeffs, 0);  // px = 0, py = 0
           double epsi = -atan(coeffs[1]); // p
 
-          double steer_value = j[1]["steering_angle"];
-          double throttle_value = j[1]["throttle"];
 
           Eigen::VectorXd state(6);
           state << 0, 0, 0, v, cte, epsi;
@@ -160,7 +172,6 @@ int main() {
               next_y_vals.push_back(polyeval(coeffs, poly_inc*i));
           }
 
-          double Lf = 2.67;
           json msgJson;
 
           msgJson["steering_angle"] = vars[0];
