@@ -65,6 +65,30 @@ Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
   return result;
 }
 
+void apply_lattency(double &px, double &py, double &psi, double &v, double steer_value, double throttle_value) {
+  double last_delta = - steer_value;
+  double last_a = throttle_value;
+  const double dt = 0.1;
+  const double Lf = 2.67;
+
+  const double miles_to_meters = (1609.0/3600);
+  px = px + v*miles_to_meters *cos(psi)*dt;
+  py = py + v*miles_to_meters *sin(psi)*dt;
+  psi = psi + (v*miles_to_meters)/Lf * last_delta * dt;
+  v = v + (last_a * dt)/1609.0 ;
+}
+
+void transform_coordinates(vector<double> &ptsx, vector<double> &ptsy, const double px, const double py, const double psi) {
+  for (int i = 0; i < ptsx.size(); i++) {
+    // shift car reference angle to 90 degrees
+      double shift_x = ptsx[i] - px;
+      double shift_y = ptsy[i] - py;
+
+      ptsx[i] = shift_x * cos(-psi) - shift_y * sin(-psi);
+      ptsy[i] = shift_x * sin(-psi) + shift_y * cos(-psi);
+  }
+}
+
 int main() {
   uWS::Hub h;
 
@@ -95,32 +119,8 @@ int main() {
           double steer_value = j[1]["steering_angle"];
           double throttle_value = j[1]["throttle"];
 
-
-          std::cout << " x,"<< px <<" y,"<< py <<" psi,"<< psi <<" v,"<< v <<std::endl;
-
-          //handle latency
-          double last_delta = - steer_value;
-          double last_a = throttle_value;
-          const double dt = 0.1;
-          const double Lf = 2.67;
-
-          const double miles_to_meters = (1609.0/3600);
-          px = px + v*miles_to_meters *cos(psi)*dt;
-          py = py + v*miles_to_meters *sin(psi)*dt;
-          psi = psi + (v*miles_to_meters)/Lf * last_delta * dt;
-          v = v + (last_a * dt)/1609.0 ;
-
-          std::cout << "After latency:  x,"<< px <<" y,"<< py <<" psi,"<< psi <<" v,"<< v <<std::endl;
-
-
-          for (int i = 0; i < ptsx.size(); i++) {
-            // shift car reference angle to 90 degrees
-            double shift_x = ptsx[i] - px;
-            double shift_y = ptsy[i] - py;
-
-            ptsx[i] = shift_x * cos(-psi) - shift_y * sin(-psi);
-            ptsy[i] = shift_x * sin(-psi) + shift_y * cos(-psi);
-          }
+          apply_lattency(px, py, psi, v, steer_value, throttle_value);
+          transform_coordinates(ptsx, ptsy, px, py, psi);
 
           double* ptrx = &ptsx[0];
           double* ptry = &ptsy[0];
