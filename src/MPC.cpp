@@ -21,7 +21,7 @@ double dt = 0.1;
 // This is the length from front to CoG that has a similar radius.
 const double Lf = 2.67;
 
-double ref_v = 70;
+double ref_v = 77;
 double ref_cte = 0;
 double ref_espi = 0;
 
@@ -52,12 +52,12 @@ class FG_eval {
     for (int i = 0; i < N; i++) {
       fg[0] += 165*CppAD::pow(vars[cte_start + i] - ref_cte, 2);
       fg[0] += 1553*CppAD::pow(vars[epsi_start + i] - ref_espi, 2);
-      fg[0] += 1*CppAD::pow(vars[v_start + i] - ref_v, 2);
+      fg[0] += 0.55*CppAD::pow(vars[v_start + i] - ref_v, 2);
     }
 
     for (int i = 0; i < N - 1; i++) {
-      fg[0] += 0.051*CppAD::pow(vars[delta_start + i], 2);
-      fg[0] += 0.012*CppAD::pow(vars[a_start + i], 2);
+      fg[0] += 1*CppAD::pow(vars[delta_start + i], 2);
+      fg[0] += 5*CppAD::pow(vars[a_start + i], 2);
     }
 
     for (int i = 0; i < N - 2; i++) {
